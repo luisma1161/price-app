@@ -1,0 +1,23 @@
+button,
+.btn {
+  background-color: #16325C;
+  color: #D8E7F4;
+  border: 2px solid #8FB8D0;
+  border-radius: 9999px;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+  transition: all 0.25s ease-in-out;
+  cursor: pointer;
+}
+button:hover,
+.btn:hover {
+  background-color: #1E4A80;
+  border-color: #A3D2E9;
+  box-shadow: 0 0 8px rgba(163, 210, 233, 0.5);
+  transform: translateY(-1px);
+}
+button:active,
+.btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
