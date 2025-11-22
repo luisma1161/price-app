@@ -254,7 +254,9 @@ export default function Page() {
   const [deductChoice, setDeductChoice] = useState<'width' | 'length'>('width');
   const isSavingRef = useRef(false);
 
-  useEffect(() => { document.title = "Price App"; }, []);
+  useEffect(() => { 
+    document.title = "Price App";
+  }, []);
 
   useEffect(() => {
     try {
@@ -431,6 +433,12 @@ export default function Page() {
   return (
     <>
       <style jsx global>{`
+        /* Desktop zoom - only apply on screens wider than mobile */
+        @media (min-width: 768px) {
+          body {
+            zoom: 0.95;
+          }
+        }
         .half-input { width: 50%; }
         .big-check { width: 20px; height: 20px; transform: scale(1.6); cursor: pointer; accent-color: #2563eb; }
         input:focus { outline: 3px solid #2563eb; }
