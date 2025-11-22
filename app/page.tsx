@@ -439,8 +439,11 @@ export default function Page() {
             zoom: 0.95;
           }
         }
-        body {
-          background-color: white;
+        /* Force light mode - override dark mode */
+        html, body {
+          background-color: white !important;
+          color: black !important;
+          color-scheme: light;
         }
         .half-input { width: 50%; }
         .big-check { width: 20px; height: 20px; transform: scale(1.6); cursor: pointer; accent-color: #2563eb; }
