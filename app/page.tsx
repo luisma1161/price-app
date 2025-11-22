@@ -121,7 +121,7 @@ function NumberField(props: {
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           tabIndex={tabIndex}
-          enterKeyHint="next"
+          inputMode="decimal"
         />
         {suffix ? <span className="text-xs opacity-70 w-8">{suffix}</span> : null}
       </div>
