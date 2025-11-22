@@ -246,10 +246,14 @@ export default function Page() {
   const box1LengthRef = useRef<HTMLInputElement>(null);
   const box1HeightRef = useRef<HTMLInputElement>(null);
   const box1DoorsRef = useRef<HTMLInputElement>(null);
+  const box1DeductLengthRef = useRef<HTMLInputElement>(null);
+  const box1DeductHeightRef = useRef<HTMLInputElement>(null);
   const box2WidthRef = useRef<HTMLInputElement>(null);
   const box2LengthRef = useRef<HTMLInputElement>(null);
   const box2HeightRef = useRef<HTMLInputElement>(null);
   const box2DoorsRef = useRef<HTMLInputElement>(null);
+  const box2DeductLengthRef = useRef<HTMLInputElement>(null);
+  const box2DeductHeightRef = useRef<HTMLInputElement>(null);
   const includeBox2Ref = useRef<HTMLInputElement>(null);
   const modalApplyBtnRef = useRef<HTMLButtonElement>(null);
   const initialPricesRef = useRef<PriceSettings | null>(null);
@@ -550,13 +554,13 @@ export default function Page() {
           </div>
           <div className="grid md:grid-cols-3 gap-3">
             <label className="flex items-center gap-2"><input type="checkbox" checked={box1.floorOn} onChange={(e) => setBox1({ ...box1, floorOn: e.target.checked })} /><span>Include Floor</span></label>
-            <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box1DoorsRef} label="" value={box1.doors} onChange={(n) => setBox1({ ...box1, doors: n })} /></label>
+            <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box1DoorsRef} label="" value={box1.doors} onChange={(n) => setBox1({ ...box1, doors: n })} nextRef={box1.deductOn ? box1DeductLengthRef : undefined} /></label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={box1.deductOn} onChange={(e) => setBox1({ ...box1, deductOn: e.target.checked })} /><span>Deduct a custom wall</span></label>
           </div>
           {box1.deductOn && (
             <div className="grid md:grid-cols-2 gap-4">
-              <FtInFields label="Deduct Wall Length" ft={box1.deductLenFt} inch={box1.deductLenIn} onFt={(n) => setBox1({ ...box1, deductLenFt: n })} onIn={(n) => setBox1({ ...box1, deductLenIn: n })} />
-              <FtInFields label="Deduct Wall Height" ft={box1.deductHtFt} inch={box1.deductHtIn} onFt={(n) => setBox1({ ...box1, deductHtFt: n })} onIn={(n) => setBox1({ ...box1, deductHtIn: n })} />
+              <FtInFields firstInputRef={box1DeductLengthRef} label="Deduct Wall Length" ft={box1.deductLenFt} inch={box1.deductLenIn} onFt={(n) => setBox1({ ...box1, deductLenFt: n })} onIn={(n) => setBox1({ ...box1, deductLenIn: n })} nextRef={box1DeductHeightRef} />
+              <FtInFields firstInputRef={box1DeductHeightRef} label="Deduct Wall Height" ft={box1.deductHtFt} inch={box1.deductHtIn} onFt={(n) => setBox1({ ...box1, deductHtFt: n })} onIn={(n) => setBox1({ ...box1, deductHtIn: n })} />
             </div>
           )}
           <AddOnsEditor addOns={addOns1} setAddOns={setAddOns1} onPrintAndSave={handlePrintAndSave} printRef={box1PrintRef} addRef={box1AddRef} onExitPrint={() => { includeBox2Ref.current?.focus(); }} />
@@ -586,13 +590,13 @@ export default function Page() {
               </div>
               <div className="grid md:grid-cols-3 gap-3">
                 <label className="flex items-center gap-2"><input type="checkbox" checked={box2.floorOn} onChange={(e) => setBox2({ ...box2, floorOn: e.target.checked })} /><span>Include Floor</span></label>
-                <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box2DoorsRef} label="" value={box2.doors} onChange={(n) => setBox2({ ...box2, doors: n })} /></label>
+                <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box2DoorsRef} label="" value={box2.doors} onChange={(n) => setBox2({ ...box2, doors: n })} nextRef={box2.deductOn ? box2DeductLengthRef : undefined} /></label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={box2.deductOn} onChange={(e) => setBox2({ ...box2, deductOn: e.target.checked })} /><span>Deduct a custom wall</span></label>
               </div>
               {box2.deductOn && (
                 <div className="grid md:grid-cols-2 gap-4">
-                  <FtInFields label="Deduct Wall Length" ft={box2.deductLenFt} inch={box2.deductLenIn} onFt={(n) => setBox2({ ...box2, deductLenFt: n })} onIn={(n) => setBox2({ ...box2, deductLenIn: n })} />
-                  <FtInFields label="Deduct Wall Height" ft={box2.deductHtFt} inch={box2.deductHtIn} onFt={(n) => setBox2({ ...box2, deductHtFt: n })} onIn={(n) => setBox2({ ...box2, deductHtIn: n })} />
+                  <FtInFields firstInputRef={box2DeductLengthRef} label="Deduct Wall Length" ft={box2.deductLenFt} inch={box2.deductLenIn} onFt={(n) => setBox2({ ...box2, deductLenFt: n })} onIn={(n) => setBox2({ ...box2, deductLenIn: n })} nextRef={box2DeductHeightRef} />
+                  <FtInFields firstInputRef={box2DeductHeightRef} label="Deduct Wall Height" ft={box2.deductHtFt} inch={box2.deductHtIn} onFt={(n) => setBox2({ ...box2, deductHtFt: n })} onIn={(n) => setBox2({ ...box2, deductHtIn: n })} />
                 </div>
               )}
               <AddOnsEditor addOns={addOns2} setAddOns={setAddOns2} onPrintAndSave={handlePrintAndSave} printRef={box2PrintRef} addRef={box2AddRef} onExitPrint={() => { resetAllRef.current?.focus(); }} />
