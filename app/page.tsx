@@ -132,7 +132,7 @@ function FtInFields(props: { label: string; ft: number; inch: number; onFt: (n: 
   );
 }
 
-function AddOnsEditor({ addOns, setAddOns, onPrint, printRef, addRef, onExitPrint }: { addOns: AddOn[]; setAddOns: (x: AddOn[]) => void; onPrint: () => void; printRef: any; addRef: any; onExitPrint?: () => void; }) {
+function AddOnsEditor({ addOns, setAddOns, onPrintAndSave, printRef, addRef, onExitPrint }: { addOns: AddOn[]; setAddOns: (x: AddOn[]) => void; onPrintAndSave: () => void; printRef: any; addRef: any; onExitPrint?: () => void; }) {
   const update = (id: string, patch: Partial<AddOn>) => setAddOns(addOns.map((a) => (a.id === id ? { ...a, ...patch } : a)));
   const addRow = () => setAddOns([...addOns, { id: Math.random().toString(36).slice(2), label: "Other", qty: 0, unit: 0 }]);
   const del = (id: string) => setAddOns(addOns.filter((a) => a.id !== id));
@@ -142,7 +142,7 @@ function AddOnsEditor({ addOns, setAddOns, onPrint, printRef, addRef, onExitPrin
         <h4 className="font-semibold">Add-ons</h4>
         <div className="flex items-center gap-3">
           <button ref={addRef} type="button" onClick={addRow} onKeyDown={(e) => { if (e.key === 'Enter') addRow(); }} className="border rounded px-2 py-1 text-sm no-print bg-white hover:bg-lime-200 hover:ring-4 ring-lime-500 focus-visible:bg-lime-200 focus-visible:ring-4 focus-visible:ring-lime-500 transition">+ Add Row</button>
-          <button ref={printRef} type="button" onClick={onPrint} onKeyDown={(e) => { if (e.key === 'Enter') { onPrint(); } else if (e.key === 'Tab' && !e.shiftKey) { if (onExitPrint) { e.preventDefault(); onExitPrint(); } } }} className="border rounded px-3 py-1 text-sm no-print bg-gray-100 text-black hover:bg-yellow-200 hover:ring-4 ring-yellow-500 transition focus-visible:ring-4 focus-visible:ring-yellow-500 focus-visible:bg-yellow-200">Print to PDF</button>
+          <button ref={printRef} type="button" onClick={onPrintAndSave} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); onPrintAndSave(); } else if (e.key === 'Tab' && !e.shiftKey) { if (onExitPrint) { e.preventDefault(); onExitPrint(); } } }} className="border rounded px-3 py-1 text-sm no-print bg-purple-400 text-white font-semibold hover:bg-purple-500 hover:ring-4 ring-purple-500 transition focus-visible:ring-4 focus-visible:ring-purple-500 focus-visible:bg-purple-500">Print and Save</button>
         </div>
       </div>
       {addOns.map((a) => (
@@ -252,6 +252,7 @@ export default function Page() {
   const [addOns2, setAddOns2] = useState<AddOn[]>([]);
   const [showDeductModal, setShowDeductModal] = useState(false);
   const [deductChoice, setDeductChoice] = useState<'width' | 'length'>('width');
+  const isSavingRef = useRef(false);
 
   useEffect(() => { document.title = "Price App"; }, []);
 
@@ -331,10 +332,96 @@ export default function Page() {
     }
     if (typeof window !== "undefined") {
       const oldTitle = document.title;
-      document.title = meta.quoteNo ? `Cost-${meta.quoteNo}` : "Cost";
+      const dateStr = new Date().toISOString().split('T')[0];
+      document.title = meta.quoteNo ? `cost-${meta.quoteNo}-${dateStr}` : `cost-${dateStr}`;
       window.print();
       document.title = oldTitle;
     }
+  }
+
+  function handlePrintAndSave() {
+    // Prevent double-clicks/calls
+    if (isSavingRef.current) return;
+    
+    if (!validateFields()) {
+      if (showRequiredMetaErrors) quoteNoRef.current?.focus();
+      else if (box1.wFt === 0 || box1.lFt === 0) box1WidthRef.current?.focus();
+      else if (includeBox2 && (box2.wFt === 0 || box2.lFt === 0)) box2WidthRef.current?.focus();
+      return;
+    }
+    
+    isSavingRef.current = true;
+    
+    const dateStr = new Date().toISOString().split('T')[0];
+    const baseFilename = meta.quoteNo ? `cost-${meta.quoteNo}-${dateStr}` : `cost-${dateStr}`;
+    
+    // First save as JSON
+    const quoteData = {
+      meta,
+      prices,
+      box1,
+      box2,
+      includeBox2,
+      addOns1,
+      addOns2,
+      savedDate: new Date().toISOString()
+    };
+    
+    const jsonString = JSON.stringify(quoteData, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${baseFilename}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    // Then print (after a small delay to let the save complete)
+    setTimeout(() => {
+      if (typeof window !== "undefined") {
+        const oldTitle = document.title;
+        document.title = baseFilename;
+        window.print();
+        document.title = oldTitle;
+      }
+      // Reset flag after everything is done
+      setTimeout(() => { isSavingRef.current = false; }, 1000);
+    }, 500);
+  }
+
+  function handleLoadQuote() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = (e: any) => {
+      const file = e.target?.files?.[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const jsonString = event.target?.result as string;
+          const loadedData = JSON.parse(jsonString);
+          
+          // Load all the data into state
+          if (loadedData.meta) setMeta(loadedData.meta);
+          if (loadedData.prices) setPrices(loadedData.prices);
+          if (loadedData.box1) setBox1(loadedData.box1);
+          if (loadedData.box2) setBox2(loadedData.box2);
+          if (loadedData.includeBox2 !== undefined) setIncludeBox2(loadedData.includeBox2);
+          if (loadedData.addOns1) setAddOns1(loadedData.addOns1);
+          if (loadedData.addOns2) setAddOns2(loadedData.addOns2);
+          
+          alert('Quote loaded successfully!');
+        } catch (error) {
+          alert('Error loading quote file. Please make sure it is a valid quote JSON file.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 
   const today = new Date().toLocaleDateString();
@@ -384,6 +471,8 @@ export default function Page() {
             <SalesRepChooser value={meta.salesRep} onChange={(rep) => setMeta({ ...meta, salesRep: rep })} alexRef={alexRef} luisRef={luisRef} />
             <button ref={resetAllRef} type="button" onClick={handleResetAll} onKeyDown={(e) => { if (e.key === 'Enter') handleResetAll(); }} className="border rounded px-3 py-1 text-sm bg-red-400 text-white font-semibold hover:bg-red-500 hover:ring-4 ring-red-500 focus:ring-4 focus:ring-red-500 transition" tabIndex={-1}>Reset All</button>
             <button type="button" onClick={handlePrint} onKeyDown={(e) => { if (e.key === 'Enter') handlePrint(); }} className="border rounded px-3 py-1 text-sm bg-green-400 text-white font-semibold hover:bg-green-500 hover:ring-4 ring-green-500 focus:ring-4 focus:ring-green-500 transition" tabIndex={-1}>Print to PDF</button>
+            <button type="button" onClick={handleLoadQuote} onKeyDown={(e) => { if (e.key === 'Enter') handleLoadQuote(); }} className="border rounded px-3 py-1 text-sm bg-blue-400 text-white font-semibold hover:bg-blue-500 hover:ring-4 ring-blue-500 focus:ring-4 focus:ring-blue-500 transition" tabIndex={-1}>Open Quote</button>
+            <button type="button" onClick={handlePrintAndSave} onKeyDown={(e) => { if (e.key === 'Enter') handlePrintAndSave(); }} className="border rounded px-3 py-1 text-sm bg-purple-400 text-white font-semibold hover:bg-purple-500 hover:ring-4 ring-purple-500 focus:ring-4 focus:ring-purple-500 transition" tabIndex={-1}>Print and Save</button>
           </div>
         </header>
 
@@ -438,7 +527,7 @@ export default function Page() {
               <FtInFields label="Deduct Wall Height" ft={box1.deductHtFt} inch={box1.deductHtIn} onFt={(n) => setBox1({ ...box1, deductHtFt: n })} onIn={(n) => setBox1({ ...box1, deductHtIn: n })} />
             </div>
           )}
-          <AddOnsEditor addOns={addOns1} setAddOns={setAddOns1} onPrint={handlePrint} printRef={box1PrintRef} addRef={box1AddRef} onExitPrint={() => { includeBox2Ref.current?.focus(); }} />
+          <AddOnsEditor addOns={addOns1} setAddOns={setAddOns1} onPrintAndSave={handlePrintAndSave} printRef={box1PrintRef} addRef={box1AddRef} onExitPrint={() => { includeBox2Ref.current?.focus(); }} />
           <div className="grid sm:grid-cols-2 gap-3 bg-gray-50 rounded-xl p-3">
             <div>Walls area: <strong>{calc1.wallsArea.toFixed(2)}</strong> sq ft</div>
             <div>Ceiling area: <strong>{calc1.slabArea.toFixed(2)}</strong> sq ft</div>
@@ -474,7 +563,7 @@ export default function Page() {
                   <FtInFields label="Deduct Wall Height" ft={box2.deductHtFt} inch={box2.deductHtIn} onFt={(n) => setBox2({ ...box2, deductHtFt: n })} onIn={(n) => setBox2({ ...box2, deductHtIn: n })} />
                 </div>
               )}
-              <AddOnsEditor addOns={addOns2} setAddOns={setAddOns2} onPrint={handlePrint} printRef={box2PrintRef} addRef={box2AddRef} onExitPrint={() => { resetAllRef.current?.focus(); }} />
+              <AddOnsEditor addOns={addOns2} setAddOns={setAddOns2} onPrintAndSave={handlePrintAndSave} printRef={box2PrintRef} addRef={box2AddRef} onExitPrint={() => { resetAllRef.current?.focus(); }} />
               <div className="grid sm:grid-cols-2 gap-3 bg-gray-50 rounded-xl p-3">
                 <div>Walls area: <strong>{calc2.wallsArea.toFixed(2)}</strong> sq ft</div>
                 <div>Ceiling area: <strong>{calc2.slabArea.toFixed(2)}</strong> sq ft</div>
