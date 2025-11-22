@@ -439,6 +439,9 @@ export default function Page() {
             zoom: 0.95;
           }
         }
+        body {
+          background-color: white;
+        }
         .half-input { width: 50%; }
         .big-check { width: 20px; height: 20px; transform: scale(1.6); cursor: pointer; accent-color: #2563eb; }
         input:focus { outline: 3px solid #2563eb; }
@@ -461,7 +464,7 @@ export default function Page() {
           .summary-row { border-top: 1px solid #000; }
         }
         .print-only { display: none; }
-        .sticky-totals { position: sticky; bottom: 0; background: #d4d4d4; padding: 20px; border-top: 2px solid #ccc; z-index: 20; }
+        .sticky-totals { position: sticky; bottom: 0; background: #ffffff; padding: 20px; border-top: 2px solid #000; z-index: 20; box-shadow: 0 -4px 6px rgba(0,0,0,0.1); }
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 50; }
         .modal-card { background: white; padding: 20px; border-radius: 10px; width: 500px; }
       `}</style>
