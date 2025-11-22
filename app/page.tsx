@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from "react";
 
 type BoxType = "cooler" | "freezer";
+type SalesRep = "Alex" | "Luis";
 
 type PriceSettings = {
   cooler: { wall: number; ceiling: number; floor: number };
@@ -15,7 +16,7 @@ type PriceSettings = {
 
 type AddOn = { id: string; label: string; qty: number; unit: number };
 
-type Meta = { customer: string; project: string; quoteNo: string };
+type Meta = { customer: string; project: string; quoteNo: string; salesRep: SalesRep };
 
 const STORE_KEY = 'cf_pricer_v1';
 
@@ -140,8 +141,8 @@ function AddOnsEditor({ addOns, setAddOns, onPrint, printRef, addRef, onExitPrin
       <div className="flex justify-between items-center">
         <h4 className="font-semibold">Add-ons</h4>
         <div className="flex items-center gap-3">
-          <button ref={addRef} type="button" onClick={addRow} className="border rounded px-2 py-1 text-sm no-print bg-white hover:bg-lime-200 hover:ring-4 ring-lime-500 focus-visible:bg-lime-200 focus-visible:ring-4 focus-visible:ring-lime-500 transition">+ Add Row</button>
-          <button ref={printRef} type="button" onClick={onPrint} onKeyDown={(e) => { if (e.key === 'Tab' && !e.shiftKey) { if (onExitPrint) { e.preventDefault(); onExitPrint(); } } }} className="border rounded px-3 py-1 text-sm no-print bg-gray-100 text-black hover:bg-yellow-200 hover:ring-4 ring-yellow-500 transition focus-visible:ring-4 focus-visible:ring-yellow-500 focus-visible:bg-yellow-200">Print to PDF</button>
+          <button ref={addRef} type="button" onClick={addRow} onKeyDown={(e) => { if (e.key === 'Enter') addRow(); }} className="border rounded px-2 py-1 text-sm no-print bg-white hover:bg-lime-200 hover:ring-4 ring-lime-500 focus-visible:bg-lime-200 focus-visible:ring-4 focus-visible:ring-lime-500 transition">+ Add Row</button>
+          <button ref={printRef} type="button" onClick={onPrint} onKeyDown={(e) => { if (e.key === 'Enter') { onPrint(); } else if (e.key === 'Tab' && !e.shiftKey) { if (onExitPrint) { e.preventDefault(); onExitPrint(); } } }} className="border rounded px-3 py-1 text-sm no-print bg-gray-100 text-black hover:bg-yellow-200 hover:ring-4 ring-yellow-500 transition focus-visible:ring-4 focus-visible:ring-yellow-500 focus-visible:bg-yellow-200">Print to PDF</button>
         </div>
       </div>
       {addOns.map((a) => (
@@ -150,7 +151,7 @@ function AddOnsEditor({ addOns, setAddOns, onPrint, printRef, addRef, onExitPrin
           <label className="col-span-2 grid gap-1"><span className="text-sm opacity-80">Qty</span><NumberField label="" value={a.qty} onChange={(n) => update(a.id, { qty: n })} /></label>
           <label className="col-span-3 grid gap-1"><span className="text-sm opacity-80">Unit $</span><NumberField label="" value={a.unit} onChange={(n) => update(a.id, { unit: n })} step={0.01} /></label>
           <div className="col-span-1 self-center text-right text-sm">{currency((a.qty || 0) * (a.unit || 0))}</div>
-          <button type="button" onClick={() => del(a.id)} className="col-span-1 border rounded px-2 py-1 text-sm no-print hover:shadow-md hover:ring-4 ring-red-500 focus-visible:ring-4 focus-visible:ring-red-500 transition">✕</button>
+          <button type="button" onClick={() => del(a.id)} onKeyDown={(e) => { if (e.key === 'Enter') del(a.id); }} className="col-span-1 border rounded px-2 py-1 text-sm no-print hover:shadow-md hover:ring-4 ring-red-500 focus-visible:ring-4 focus-visible:ring-red-500 transition">✕</button>
         </div>
       ))}
     </div>
@@ -160,8 +161,49 @@ function AddOnsEditor({ addOns, setAddOns, onPrint, printRef, addRef, onExitPrin
 function TypeChooser({ value, onChange, name }: { value: BoxType; onChange: (t: BoxType) => void; name: string; }) {
   return (
     <div className="flex items-center gap-4">
-      <label className="flex items-center gap-3 border rounded-xl px-4 py-2 cursor-pointer hover:bg-gray-50"><input type="radio" name={name} className="big-check" checked={value === 'cooler'} onChange={() => onChange('cooler')} aria-label="Set type to Cooler" /><span className="text-base font-medium">Cooler</span></label>
-      <label className="flex items-center gap-3 border rounded-xl px-4 py-2 cursor-pointer hover:bg-gray-50"><input type="radio" name={name} className="big-check" checked={value === 'freezer'} onChange={() => onChange('freezer')} aria-label="Set type to Freezer" /><span className="text-base font-medium">Freezer</span></label>
+      <label className="flex items-center gap-3 border rounded-xl px-4 py-2 cursor-pointer hover:bg-gray-50"><input type="radio" name={name} className="big-check" checked={value === 'cooler'} onChange={() => onChange('cooler')} aria-label="Set type to Cooler" tabIndex={-1} /><span className="text-base font-medium">Cooler</span></label>
+      <label className="flex items-center gap-3 border rounded-xl px-4 py-2 cursor-pointer hover:bg-gray-50"><input type="radio" name={name} className="big-check" checked={value === 'freezer'} onChange={() => onChange('freezer')} aria-label="Set type to Freezer" tabIndex={-1} /><span className="text-base font-medium">Freezer</span></label>
+    </div>
+  );
+}
+
+function SalesRepChooser({ value, onChange, alexRef, luisRef }: { value: SalesRep; onChange: (rep: SalesRep) => void; alexRef?: any; luisRef?: any; }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-xs opacity-70">Sales Rep:</span>
+      <button
+        ref={alexRef}
+        type="button"
+        onClick={() => onChange('Alex')}
+        onKeyDown={(e) => { 
+          if (e.key === 'Enter') {
+            onChange('Alex');
+          } else if (e.key === 'Tab' && !e.shiftKey) { 
+            e.preventDefault(); 
+            luisRef.current?.focus(); 
+          } 
+        }}
+        className={`border rounded px-3 py-1 text-sm transition ${
+          value === 'Alex' 
+            ? 'bg-yellow-300 text-black ring-4 ring-yellow-500' 
+            : 'bg-gray-100 hover:bg-gray-200'
+        }`}
+      >
+        Alex
+      </button>
+      <button
+        ref={luisRef}
+        type="button"
+        onClick={() => onChange('Luis')}
+        onKeyDown={(e) => { if (e.key === 'Enter') onChange('Luis'); }}
+        className={`border rounded px-3 py-1 text-sm transition ${
+          value === 'Luis' 
+            ? 'bg-yellow-300 text-black ring-4 ring-yellow-500' 
+            : 'bg-gray-100 hover:bg-gray-200'
+        }`}
+      >
+        Luis
+      </button>
     </div>
   );
 }
@@ -186,6 +228,8 @@ function useBoxCalc(params: { type: BoxType; wFt: number; wIn: number; lFt: numb
 
 export default function Page() {
   const quoteNoRef = useRef<HTMLInputElement>(null);
+  const alexRef = useRef<HTMLButtonElement>(null);
+  const luisRef = useRef<HTMLButtonElement>(null);
   const box1WidthRef = useRef<HTMLInputElement>(null);
   const box2WidthRef = useRef<HTMLInputElement>(null);
   const includeBox2Ref = useRef<HTMLInputElement>(null);
@@ -200,7 +244,7 @@ export default function Page() {
   const [includeBox2, setIncludeBox2] = useState(false);
   const [showRequiredErrors, setShowRequiredErrors] = useState(false);
   const [showRequiredMetaErrors, setShowRequiredMetaErrors] = useState(false);
-  const [meta, setMeta] = useState<Meta>({ customer: '', project: '', quoteNo: '' });
+  const [meta, setMeta] = useState<Meta>({ customer: '', project: '', quoteNo: '', salesRep: 'Alex' });
   const [prices, setPrices] = useState<PriceSettings>({ ...DEFAULTS_PRICES });
   const [box1, setBox1] = useState({ type: "cooler" as BoxType, floorOn: false, wFt: 0, wIn: 0, lFt: 0, lIn: 0, hFt: 7, hIn: 6, doors: 0, deductOn: false, deductLenFt: 8, deductLenIn: 0, deductHtFt: 7, deductHtIn: 6 });
   const [box2, setBox2] = useState({ type: "freezer" as BoxType, floorOn: false, wFt: 0, wIn: 0, lFt: 0, lIn: 0, hFt: 7, hIn: 6, doors: 0, deductOn: false, deductLenFt: 8, deductLenIn: 0, deductHtFt: 7, deductHtIn: 6 });
@@ -253,7 +297,7 @@ export default function Page() {
   function skipDeduct() { setShowDeductModal(false); setTimeout(() => { box2WidthRef.current?.focus(); }, 50); }
   
   function handleResetAll() {
-    localStorage.removeItem(STORE_KEY); setMeta({ customer: '', project: '', quoteNo: '' }); setPrices({ ...DEFAULTS_PRICES });
+    localStorage.removeItem(STORE_KEY); setMeta({ customer: '', project: '', quoteNo: '', salesRep: 'Alex' }); setPrices({ ...DEFAULTS_PRICES });
     setBox1({ type: "cooler", floorOn: false, wFt: 0, wIn: 0, lFt: 0, lIn: 0, hFt: 7, hIn: 6, doors: 0, deductOn: false, deductLenFt: 8, deductLenIn: 0, deductHtFt: 7, deductHtIn: 6 });
     setBox2({ type: "freezer", floorOn: false, wFt: 0, wIn: 0, lFt: 0, lIn: 0, hFt: 7, hIn: 6, doors: 0, deductOn: false, deductLenFt: 8, deductLenIn: 0, deductHtFt: 7, deductHtIn: 6 });
     setAddOns1([]); setAddOns2([]); setIncludeBox2(false);
@@ -293,11 +337,6 @@ export default function Page() {
     }
   }
 
-  function copyQuote() {
-    const text = `QUOTE SUMMARY\nQuote #: ${meta.quoteNo}\nGrand Total: ${currency(grand)}`; 
-    if (typeof navigator !== 'undefined' && navigator.clipboard) { navigator.clipboard.writeText(text); alert('Summary copied.'); }
-  }
-
   const today = new Date().toLocaleDateString();
   const unit1 = prices[box1.type];
   const unit2 = prices[box2.type];
@@ -333,17 +372,18 @@ export default function Page() {
       `}</style>
 
       <main className="mx-auto max-w-7xl p-6 grid gap-6 print-scale">
-      <header className="space-y-1 no-print">
+    <header className="space-y-1 no-print">
           <h1 className="text-2xl font-bold">Cooler / Freezer Pricing</h1>
           <div className="grid md:grid-cols-3 gap-3">
-            <label className="grid gap-1"><span className="text-sm opacity-80">Quote #</span><input ref={quoteNoRef} className={`border rounded px-2 py-1 ${showRequiredMetaErrors ? " bg-red-200" : ""}`} value={meta.quoteNo} onChange={(e) => setMeta({ ...meta, quoteNo: e.target.value })} type="text" onKeyDown={(e) => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); box1WidthRef.current?.focus(); } }} /></label>
-            <label className="grid gap-1"><span className="text-sm opacity-80">Customer</span><input className="border rounded px-2 py-1" value={meta.customer} onChange={(e) => setMeta({ ...meta, customer: e.target.value })} type="text" /></label>
-            <label className="grid gap-1"><span className="text-sm opacity-80">Project</span><input className="border rounded px-2 py-1" value={meta.project} onChange={(e) => setMeta({ ...meta, project: e.target.value })} type="text" /></label>
+            <label className="grid gap-1"><span className="text-sm opacity-80">Quote #</span><input ref={quoteNoRef} className={`border rounded px-2 py-1 ${showRequiredMetaErrors ? " bg-red-200" : ""}`} value={meta.quoteNo} onChange={(e) => setMeta({ ...meta, quoteNo: e.target.value })} type="text" onKeyDown={(e) => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); alexRef.current?.focus(); } }} /></label>
+            <label className="grid gap-1"><span className="text-sm opacity-80">Customer</span><input className="border rounded px-2 py-1" value={meta.customer} onChange={(e) => setMeta({ ...meta, customer: e.target.value })} type="text" tabIndex={-1} /></label>
+            <label className="grid gap-1"><span className="text-sm opacity-80">Project</span><input className="border rounded px-2 py-1" value={meta.project} onChange={(e) => setMeta({ ...meta, project: e.target.value })} type="text" tabIndex={-1} /></label>
           </div>
-          <div className="flex gap-3 pt-2">
-            <button ref={resetAllRef} type="button" onClick={handleResetAll} className="border rounded px-3 py-1 text-sm bg-gray-100 hover:bg-red-300 hover:ring-4 ring-red-500 transition">Reset All</button>
-            <button type="button" onClick={copyQuote} className="border rounded px-3 py-1 text-sm bg-gray-100 hover:bg-blue-300 hover:ring-4 ring-blue-500 transition">Copy Summary</button>
-            <button type="button" onClick={handlePrint} className="border rounded px-3 py-1 text-sm bg-gray-100 hover:bg-cyan-300 hover:ring-4 ring-cyan-500 transition">Print to PDF</button>
+
+          <div className="flex gap-3 pt-2 items-center">
+            <SalesRepChooser value={meta.salesRep} onChange={(rep) => setMeta({ ...meta, salesRep: rep })} alexRef={alexRef} luisRef={luisRef} />
+            <button ref={resetAllRef} type="button" onClick={handleResetAll} onKeyDown={(e) => { if (e.key === 'Enter') handleResetAll(); }} className="border rounded px-3 py-1 text-sm bg-red-400 text-white font-semibold hover:bg-red-500 hover:ring-4 ring-red-500 focus:ring-4 focus:ring-red-500 transition" tabIndex={-1}>Reset All</button>
+            <button type="button" onClick={handlePrint} onKeyDown={(e) => { if (e.key === 'Enter') handlePrint(); }} className="border rounded px-3 py-1 text-sm bg-green-400 text-white font-semibold hover:bg-green-500 hover:ring-4 ring-green-500 focus:ring-4 focus:ring-green-500 transition" tabIndex={-1}>Print to PDF</button>
           </div>
         </header>
 
@@ -353,27 +393,27 @@ export default function Page() {
             <div className="grid gap-2">
               <h3 className="font-medium">Cooler ($/sq ft)</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumberField label="Walls" value={prices.cooler.wall} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, wall: n } })} step={0.01} />
-                <NumberField label="Ceiling" value={prices.cooler.ceiling} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, ceiling: n } })} step={0.01} />
-                <NumberField label="Floor" value={prices.cooler.floor} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, floor: n } })} step={0.01} />
+                <NumberField label="Walls" value={prices.cooler.wall} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, wall: n } })} step={0.01} tabIndex={-1} />
+                <NumberField label="Ceiling" value={prices.cooler.ceiling} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, ceiling: n } })} step={0.01} tabIndex={-1} />
+                <NumberField label="Floor" value={prices.cooler.floor} onChange={(n) => setPrices({ ...prices, cooler: { ...prices.cooler, floor: n } })} step={0.01} tabIndex={-1} />
               </div>
             </div>
             <div className="grid gap-2">
               <h3 className="font-medium">Freezer ($/sq ft)</h3>
               <div className="grid grid-cols-3 gap-2">
-                <NumberField label="Walls" value={prices.freezer.wall} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, wall: n } })} step={0.01} />
-                <NumberField label="Ceiling" value={prices.freezer.ceiling} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, ceiling: n } })} step={0.01} />
-                <NumberField label="Floor" value={prices.freezer.floor} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, floor: n } })} step={0.01} />
+                <NumberField label="Walls" value={prices.freezer.wall} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, wall: n } })} step={0.01} tabIndex={-1} />
+                <NumberField label="Ceiling" value={prices.freezer.ceiling} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, ceiling: n } })} step={0.01} tabIndex={-1} />
+                <NumberField label="Floor" value={prices.freezer.floor} onChange={(n) => setPrices({ ...prices, freezer: { ...prices.freezer, floor: n } })} step={0.01} tabIndex={-1} />
               </div>
             </div>
           </div>
           <div className="grid md:grid-cols-2 gap-3">
-            <NumberField label="Cooler Door Price" value={prices.doorCooler} onChange={(n) => setPrices({ ...prices, doorCooler: n })} />
-            <NumberField label="Freezer Door Price" value={prices.doorFreezer} onChange={(n) => setPrices({ ...prices, doorFreezer: n })} />
+            <NumberField label="Cooler Door Price" value={prices.doorCooler} onChange={(n) => setPrices({ ...prices, doorCooler: n })} tabIndex={-1} />
+            <NumberField label="Freezer Door Price" value={prices.doorFreezer} onChange={(n) => setPrices({ ...prices, doorFreezer: n })} tabIndex={-1} />
           </div>
           <div className="grid md:grid-cols-3 gap-2">
-            <NumberField label="Profit %" value={prices.profitPct} onChange={(n) => setPrices({ ...prices, profitPct: n })} step={0.1} suffix="%" />
-            <NumberField label="Freight ($)" value={prices.freight} onChange={(n) => setPrices({ ...prices, freight: n })} step={1} />
+            <NumberField label="Profit %" value={prices.profitPct} onChange={(n) => setPrices({ ...prices, profitPct: n })} step={0.1} suffix="%" tabIndex={-1} />
+            <NumberField label="Freight ($)" value={prices.freight} onChange={(n) => setPrices({ ...prices, freight: n })} step={1} tabIndex={-1} />
           </div>
         </section>
 
@@ -463,9 +503,10 @@ export default function Page() {
             </div>
             <div className="text-right">
               <div className="bold">Date: {today}</div>
-              {(meta.customer || meta.project || meta.quoteNo) && (
+              {(meta.customer || meta.project || meta.quoteNo || meta.salesRep) && (
                 <div style={{ marginTop: '8px' }}>
                   {meta.quoteNo && <div>Quote #: <span className="bold">{meta.quoteNo}</span></div>}
+                  {meta.salesRep && <div>Sales Rep: <span className="bold">{meta.salesRep}</span></div>}
                   {meta.customer && <div>Customer: {meta.customer}</div>}
                   {meta.project && <div>Project: {meta.project}</div>}
                 </div>
@@ -565,12 +606,12 @@ export default function Page() {
               <label className="flex items-center gap-2"><input type="radio" name="deduct" checked={deductChoice === 'length'} onChange={() => setDeductChoice('length')} /><span>Use Box 1 <strong>Length × Height</strong> (current: {feetInToText(box1.lFt, box1.lIn)} × {feetInToText(box1.hFt, box1.hIn)})</span></label>
             </div>
             <div className="flex justify-end gap-2">
-              <button className="border rounded px-3 py-1 bg-gray-100 hover:bg-red-300 hover:ring-4 ring-red-500 transition" onClick={skipDeduct}>Skip</button>
-              <button ref={modalApplyBtnRef} className="border rounded px-3 py-1 bg-black text-white hover:bg-gray-700 hover:ring-4 ring-white transition" onClick={applyAutoDeduct}>Apply Deduction</button>
+              <button className="border rounded px-3 py-1 bg-gray-100 hover:bg-red-300 hover:ring-4 ring-red-500 transition" onClick={skipDeduct} onKeyDown={(e) => { if (e.key === 'Enter') skipDeduct(); }}>Skip</button>
+              <button ref={modalApplyBtnRef} className="border rounded px-3 py-1 bg-red-400 text-white font-semibold ring-4 ring-red-500 hover:bg-red-500 transition" onClick={applyAutoDeduct} onKeyDown={(e) => { if (e.key === 'Enter') applyAutoDeduct(); }}>Apply Deduction</button>
             </div>
           </div>
         </div>
       )}
     </>
   );
-}
+}  
