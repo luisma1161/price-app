@@ -60,9 +60,10 @@ function NumberField(props: {
   suffix?: string; 
   highlight?: boolean; 
   tabIndex?: number; 
-  inputRef?: any; 
+  inputRef?: any;
+  nextRef?: any;
 }) {
-  const { label, value, onChange, step = 1, suffix, highlight, tabIndex, inputRef } = props;
+  const { label, value, onChange, step = 1, suffix, highlight, tabIndex, inputRef, nextRef } = props;
 
   const [inputValue, setInputValue] = useState(value === 0 ? "" : String(value));
   const isFocused = useRef(false);
@@ -98,6 +99,13 @@ function NumberField(props: {
     onChange(clean);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && nextRef?.current) {
+      e.preventDefault();
+      nextRef.current.focus();
+    }
+  };
+
   return (
     <label className="grid gap-1">
       <span className="text-sm opacity-80">{label}</span>
@@ -111,7 +119,9 @@ function NumberField(props: {
           onChange={handleChange} 
           onFocus={handleFocus}
           onBlur={handleBlur}
-          tabIndex={tabIndex} 
+          onKeyDown={handleKeyDown}
+          tabIndex={tabIndex}
+          enterKeyHint="next"
         />
         {suffix ? <span className="text-xs opacity-70 w-8">{suffix}</span> : null}
       </div>
@@ -119,14 +129,16 @@ function NumberField(props: {
   );
 }
 
-function FtInFields(props: { label: string; ft: number; inch: number; onFt: (n: number) => void; onIn: (n: number) => void; feetError?: boolean; firstInputRef?: any; }) {
-  const { label, ft, inch, onFt, onIn, feetError, firstInputRef } = props;
+function FtInFields(props: { label: string; ft: number; inch: number; onFt: (n: number) => void; onIn: (n: number) => void; feetError?: boolean; firstInputRef?: any; nextRef?: any; }) {
+  const { label, ft, inch, onFt, onIn, feetError, firstInputRef, nextRef } = props;
+  const inchRef = useRef<HTMLInputElement>(null);
+  
   return (
     <div className="grid gap-1">
       <span className="text-sm opacity-80">{label}</span>
       <div className="grid grid-cols-2 gap-2">
-        <NumberField inputRef={firstInputRef} label="Feet" value={ft} onChange={(n) => onFt(clampNonNeg(n))} highlight={!!feetError} />
-        <NumberField label="Inches" value={inch} onChange={(n) => onIn(clampNonNeg(n))} />
+        <NumberField inputRef={firstInputRef} label="Feet" value={ft} onChange={(n) => onFt(clampNonNeg(n))} highlight={!!feetError} nextRef={inchRef} />
+        <NumberField inputRef={inchRef} label="Inches" value={inch} onChange={(n) => onIn(clampNonNeg(n))} nextRef={nextRef} />
       </div>
     </div>
   );
@@ -231,7 +243,13 @@ export default function Page() {
   const alexRef = useRef<HTMLButtonElement>(null);
   const luisRef = useRef<HTMLButtonElement>(null);
   const box1WidthRef = useRef<HTMLInputElement>(null);
+  const box1LengthRef = useRef<HTMLInputElement>(null);
+  const box1HeightRef = useRef<HTMLInputElement>(null);
+  const box1DoorsRef = useRef<HTMLInputElement>(null);
   const box2WidthRef = useRef<HTMLInputElement>(null);
+  const box2LengthRef = useRef<HTMLInputElement>(null);
+  const box2HeightRef = useRef<HTMLInputElement>(null);
+  const box2DoorsRef = useRef<HTMLInputElement>(null);
   const includeBox2Ref = useRef<HTMLInputElement>(null);
   const modalApplyBtnRef = useRef<HTMLButtonElement>(null);
   const initialPricesRef = useRef<PriceSettings | null>(null);
@@ -526,13 +544,13 @@ export default function Page() {
             <TypeChooser value={box1.type} onChange={(t) => setBox1({ ...box1, type: t })} name="box1Type" />
           </div>
           <div className="grid md:grid-cols-3 gap-4">
-            <FtInFields firstInputRef={box1WidthRef} label="Width" ft={box1.wFt} inch={box1.wIn} onFt={(n) => setBox1({ ...box1, wFt: n })} onIn={(n) => setBox1({ ...box1, wIn: n })} feetError={showRequiredErrors && box1.wFt === 0} />
-            <FtInFields label="Length" ft={box1.lFt} inch={box1.lIn} onFt={(n) => setBox1({ ...box1, lFt: n })} onIn={(n) => setBox1({ ...box1, lIn: n })} feetError={showRequiredErrors && box1.lFt === 0} />
-            <FtInFields label="Height" ft={box1.hFt} inch={box1.hIn} onFt={(n) => setBox1({ ...box1, hFt: n })} onIn={(n) => setBox1({ ...box1, hIn: n })} />
+            <FtInFields firstInputRef={box1WidthRef} label="Width" ft={box1.wFt} inch={box1.wIn} onFt={(n) => setBox1({ ...box1, wFt: n })} onIn={(n) => setBox1({ ...box1, wIn: n })} feetError={showRequiredErrors && box1.wFt === 0} nextRef={box1LengthRef} />
+            <FtInFields firstInputRef={box1LengthRef} label="Length" ft={box1.lFt} inch={box1.lIn} onFt={(n) => setBox1({ ...box1, lFt: n })} onIn={(n) => setBox1({ ...box1, lIn: n })} feetError={showRequiredErrors && box1.lFt === 0} nextRef={box1HeightRef} />
+            <FtInFields firstInputRef={box1HeightRef} label="Height" ft={box1.hFt} inch={box1.hIn} onFt={(n) => setBox1({ ...box1, hFt: n })} onIn={(n) => setBox1({ ...box1, hIn: n })} nextRef={box1DoorsRef} />
           </div>
           <div className="grid md:grid-cols-3 gap-3">
             <label className="flex items-center gap-2"><input type="checkbox" checked={box1.floorOn} onChange={(e) => setBox1({ ...box1, floorOn: e.target.checked })} /><span>Include Floor</span></label>
-            <label className="flex items-center gap-2"><span>Doors</span><NumberField label="" value={box1.doors} onChange={(n) => setBox1({ ...box1, doors: n })} /></label>
+            <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box1DoorsRef} label="" value={box1.doors} onChange={(n) => setBox1({ ...box1, doors: n })} /></label>
             <label className="flex items-center gap-2"><input type="checkbox" checked={box1.deductOn} onChange={(e) => setBox1({ ...box1, deductOn: e.target.checked })} /><span>Deduct a custom wall</span></label>
           </div>
           {box1.deductOn && (
@@ -562,13 +580,13 @@ export default function Page() {
           {includeBox2 && (
             <>
               <div className="grid md:grid-cols-3 gap-4">
-                <FtInFields firstInputRef={box2WidthRef} label="Width" ft={box2.wFt} inch={box2.wIn} onFt={(n) => setBox2({ ...box2, wFt: n })} onIn={(n) => setBox2({ ...box2, wIn: n })} feetError={showRequiredErrors && includeBox2 && box2.wFt === 0} />
-                <FtInFields label="Length" ft={box2.lFt} inch={box2.lIn} onFt={(n) => setBox2({ ...box2, lFt: n })} onIn={(n) => setBox2({ ...box2, lIn: n })} feetError={showRequiredErrors && includeBox2 && box2.lFt === 0} />
-                <FtInFields label="Height" ft={box2.hFt} inch={box2.hIn} onFt={(n) => setBox2({ ...box2, hFt: n })} onIn={(n) => setBox2({ ...box2, hIn: n })} />
+                <FtInFields firstInputRef={box2WidthRef} label="Width" ft={box2.wFt} inch={box2.wIn} onFt={(n) => setBox2({ ...box2, wFt: n })} onIn={(n) => setBox2({ ...box2, wIn: n })} feetError={showRequiredErrors && includeBox2 && box2.wFt === 0} nextRef={box2LengthRef} />
+                <FtInFields firstInputRef={box2LengthRef} label="Length" ft={box2.lFt} inch={box2.lIn} onFt={(n) => setBox2({ ...box2, lFt: n })} onIn={(n) => setBox2({ ...box2, lIn: n })} feetError={showRequiredErrors && includeBox2 && box2.lFt === 0} nextRef={box2HeightRef} />
+                <FtInFields firstInputRef={box2HeightRef} label="Height" ft={box2.hFt} inch={box2.hIn} onFt={(n) => setBox2({ ...box2, hFt: n })} onIn={(n) => setBox2({ ...box2, hIn: n })} nextRef={box2DoorsRef} />
               </div>
               <div className="grid md:grid-cols-3 gap-3">
                 <label className="flex items-center gap-2"><input type="checkbox" checked={box2.floorOn} onChange={(e) => setBox2({ ...box2, floorOn: e.target.checked })} /><span>Include Floor</span></label>
-                <label className="flex items-center gap-2"><span>Doors</span><NumberField label="" value={box2.doors} onChange={(n) => setBox2({ ...box2, doors: n })} /></label>
+                <label className="flex items-center gap-2"><span>Doors</span><NumberField inputRef={box2DoorsRef} label="" value={box2.doors} onChange={(n) => setBox2({ ...box2, doors: n })} /></label>
                 <label className="flex items-center gap-2"><input type="checkbox" checked={box2.deductOn} onChange={(e) => setBox2({ ...box2, deductOn: e.target.checked })} /><span>Deduct a custom wall</span></label>
               </div>
               {box2.deductOn && (
