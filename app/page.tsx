@@ -494,7 +494,7 @@ export default function Page() {
     <header className="space-y-1 no-print">
           <h1 className="text-2xl font-bold">Cooler / Freezer Pricing</h1>
           <div className="grid md:grid-cols-3 gap-3">
-            <label className="grid gap-1"><span className="text-sm opacity-80">Quote #</span><input ref={quoteNoRef} className={`border rounded px-2 py-1 ${showRequiredMetaErrors ? " bg-red-200" : ""}`} value={meta.quoteNo} onChange={(e) => setMeta({ ...meta, quoteNo: e.target.value })} type="text" onKeyDown={(e) => { if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); alexRef.current?.focus(); } }} /></label>
+            <label className="grid gap-1"><span className="text-sm opacity-80">Quote #</span><input ref={quoteNoRef} className={`border rounded px-2 py-1 ${showRequiredMetaErrors ? " bg-red-200" : ""}`} value={meta.quoteNo} onChange={(e) => setMeta({ ...meta, quoteNo: e.target.value })} type="text" enterKeyHint="next" onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); box1WidthRef.current?.focus(); } else if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); alexRef.current?.focus(); } }} /></label>
             <label className="grid gap-1"><span className="text-sm opacity-80">Customer</span><input className="border rounded px-2 py-1" value={meta.customer} onChange={(e) => setMeta({ ...meta, customer: e.target.value })} type="text" tabIndex={-1} /></label>
             <label className="grid gap-1"><span className="text-sm opacity-80">Project</span><input className="border rounded px-2 py-1" value={meta.project} onChange={(e) => setMeta({ ...meta, project: e.target.value })} type="text" tabIndex={-1} /></label>
           </div>
