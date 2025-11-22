@@ -112,8 +112,9 @@ function NumberField(props: {
       <div className="flex items-center gap-2">
         <input 
           ref={inputRef} 
-          type="number" 
-          step={step} 
+          type="text" 
+          inputMode="decimal"
+          pattern="[0-9]*"
           className={`border rounded px-2 py-1 half-input${highlight ? " bg-red-200" : ""}`} 
           value={inputValue} 
           onChange={handleChange} 
@@ -121,7 +122,6 @@ function NumberField(props: {
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           tabIndex={tabIndex}
-          inputMode="decimal"
         />
         {suffix ? <span className="text-xs opacity-70 w-8">{suffix}</span> : null}
       </div>
